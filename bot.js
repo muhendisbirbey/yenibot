@@ -1,5 +1,7 @@
+
+const chalk = require('chalk');
+const moment = require('moment');
 const Discord = require('discord.js');
-const bot = new Discord.Client();
 
 var oyun = [
         "YouTube > Mühendis Bey ile Mühendis Hanım ",
