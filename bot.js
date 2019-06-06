@@ -1,32 +1,164 @@
-
-const chalk = require('chalk');
-const moment = require('moment');
 const Discord = require('discord.js');
-const ayarlar = require('../ayarlar.json');
+const client = new Discord.Client();
+const ayarlar = require('./ayarlar.json');
+const chalk = require('chalk');
+const fs = require('fs');
+const moment = require('moment');
+require('./util/eventLoader')(client);
 
 var prefix = ayarlar.prefix;
 
-module.exports = client => {
-var oyun = [
-        "YouTube > Mühendis Bey ile Mühendis Hanım ",
-        "Instagram > @muhendisbeyilemuhendishanim ",
-	"DLive.tv/muhendisbeyilhanim ",
-	" Mühendis BOT   "+client.guilds.size+ "  sunucuda " + client.users.size +" kullanıcıya hizmet veriyor!  ",
-	"Çalışmalar devam ediyor. Twitch kanalımıza gitmek için İZLE butonuna basabilirsin :)"
-    ];
-
-    setInterval(function() {
-
-        var random = Math.floor(Math.random()*(oyun.length-0+1)+0);
-
-        client.user.setGame(oyun[random], "https://www.twitch.tv/muhendisbeymuhendishanim" );
-        }, 2 * 2500);
-    
-  console.log(`[${moment().format('YYYY-MM-DD HH:mm:ss')}] BOT: Aktif, Komutlar yüklendi!`);
-  console.log(`[${moment().format('YYYY-MM-DD HH:mm:ss')}] BOT: ${client.user.username} ismi ile giriş yapıldı!`);
-  client.user.setStatus("online");
-  client.user.setGame(`${prefix}yardım + ${client.guilds.size} sunucu + ${client.users.size} kullanıcı`);
-  console.log(`[${moment().format('YYYY-MM-DD HH:mm:ss')}] BOT: Oyun ismi ayarlandı!`);
-  console.log(`[${moment().format('YYYY-MM-DD HH:mm:ss')}] BOT: Şu an ` + client.channels.size + ` adet kanala, ` + client.guilds.size + ` adet sunucuya ve ` + client.guilds.reduce((a, b) => a + b.memberCount, 0).toLocaleString() + ` kullanıcıya hizmet veriliyor!`);
+const log = message => {
+  console.log(`[${moment().format('YYYY-MM-DD HH:mm:ss')}] ${message}`);
 };
-        
+
+client.commands = new Discord.Collection();
+client.aliases = new Discord.Collection();
+fs.readdir('./komutlar/', (err, files) => {
+  if (err) console.error(err);
+  log(`${files.length} komut yüklenecek.`);
+  files.forEach(f => {
+    let props = require(`./komutlar/${f}`);
+    log(`Yüklenen komut: ${props.help.name}.`);
+    client.commands.set(props.help.name, props);
+    props.conf.aliases.forEach(alias => {
+      client.aliases.set(alias, props.help.name);
+    });
+  });
+});
+
+client.reload = command => {
+  return new Promise((resolve, reject) => {
+    try {
+      delete require.cache[require.resolve(`./komutlar/${command}`)];
+      let cmd = require(`./komutlar/${command}`);
+      client.commands.delete(command);
+      client.aliases.forEach((cmd, alias) => {
+        if (cmd === command) client.aliases.delete(alias);
+      });
+      client.commands.set(command, cmd);
+      cmd.conf.aliases.forEach(alias => {
+        client.aliases.set(alias, cmd.help.name);
+      });
+      resolve();
+    } catch (e){
+      reject(e);
+    }
+  });
+};
+
+client.load = command => {
+  return new Promise((resolve, reject) => {
+    try {
+      let cmd = require(`./komutlar/${command}`);
+      client.commands.set(command, cmd);
+      cmd.conf.aliases.forEach(alias => {
+        client.aliases.set(alias, cmd.help.name);
+      });
+      resolve();
+    } catch (e){
+      reject(e);
+    }
+  });
+};
+
+client.unload = command => {
+  return new Promise((resolve, reject) => {
+    try {
+      delete require.cache[require.resolve(`./komutlar/${command}`)];
+      let cmd = require(`./komutlar/${command}`);
+      client.commands.delete(command);
+      client.aliases.forEach((cmd, alias) => {
+        if (cmd === command) client.aliases.delete(alias);
+      });
+      resolve();
+    } catch (e){
+      reject(e);
+    }
+  });
+};
+
+client.on('message', message => {
+if (message.content.toLowerCase() === prefix + "zekam") {
+    var sans = ["11", "15", "20", "24", "28", "31", "39", "45", "49", "54", "58", "63", "67", "77", "73", "84", "80", "83", "96", "94", "99", "Albert Einstein mısın krdşm"];
+    var sonuc = sans[Math.floor((Math.random() * sans.length))];
+    const embed = new Discord.RichEmbed()
+    .addField(`***___Zekan___***`, `${sonuc}`)
+    return message.channel.sendEmbed(embed);
+}
+});
+
+client.on("message", message => {
+    const dmchannel = client.channels.find("name", "dm-log");
+    if (message.channel.type === "dm") {
+        if (message.author.bot) return;
+        dmchannel.sendMessage("", {embed: {
+            color: 3447003,
+            title: `Gönderen: ${message.author.tag}`,
+            description: `Bota Özelden Gönderilen DM: ${message.content}`
+        }})
+    }
+});
+
+client.on('message', msg => {
+  if (msg.content.toLowerCase() === 'sa') {
+    msg.reply('`Aleyküm Selam Umarim İyi Vakit Geçirirsin! <3 ` ');
+  }
+});
+
+
+
+client.on("message", msg => {
+  if (msg.content.toLowerCase().match(/(discord\.gg\/)|(discordapp\.com\/invite\/)/g) && !msg.author.bot && msg.channel.type === "text" && msg.channel.permissionsFor(msg.guild.member(bot.user)).has("MANAGE_MESSAGES")) {
+    msg.delete(500).then(deletedMsg => {
+      deletedMsg.reply("Discord davet linki paylaştığını algıladık. Bu sunucu **Revo** ile korunmakta.").catch(e => {
+        console.error(e);
+      });
+    }).catch(e => {
+      console.error(e);
+    });
+  }
+});
+
+
+
+client.on('message', msg => {
+    if (msg.content.toLowerCase() === 'sa') {
+          if (!msg.guild.member(msg.author).hasPermission("SEND_MESSAGES")) {
+          msg.react("🇦");
+          msg.react("🇸");           
+          } else {
+          msg.react("🇦");       
+          msg.react("🇸");
+          }
+      }
+  });
+
+
+  
+
+
+client.elevation = message => {
+  if(!message.guild) {
+	return; }
+  let permlvl = 0;
+  if (message.member.hasPermission("BAN_MEMBERS")) permlvl = 2;
+  if (message.member.hasPermission("ADMINISTRATOR")) permlvl = 3;
+  if (message.author.id === ayarlar.sahip) permlvl = 4;
+  return permlvl;
+};
+
+var regToken = /[\w\d]{24}\.[\w\d]{6}\.[\w\d-_]{27}/g;
+// client.on('debug', e => {
+//   console.log(chalk.bgBlue.green(e.replace(regToken, 'that was redacted')));
+// });
+
+client.on('warn', e => {
+  console.log(chalk.bgYellow(e.replace(regToken, 'that was redacted')));
+});
+
+client.on('error', e => {
+  console.log(chalk.bgRed(e.replace(regToken, 'that was redacted')));
+});
+
+client.login(ayarlar.token);
