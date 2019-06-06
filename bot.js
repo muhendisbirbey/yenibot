@@ -13,7 +13,7 @@ var oyun = [
 
         var random = Math.floor(Math.random()*(oyun.length-0+1)+0);
 
-        client.user.setGame(oyun[random], "https://www.twitch.tv/muhendisbeymuhendishanim");
+        bot.user.setGame(oyun[random], "https://www.twitch.tv/muhendisbeymuhendishanim");
         }, 2 * 2500);
         
 bot.login(process.env.BOT_TOKEN);
